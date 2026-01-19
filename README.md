@@ -107,3 +107,57 @@ aws ec2 describe-route-tables \
   --query 'RouteTables[0].Routes'
 
 ```
+
+
+## rds
+
+```sh
+# filter to what exact engine your instance class supports:
+aws rds describe-orderable-db-instance-options \
+  --engine postgres \
+  --db-instance-class db.t3.micro \
+  --query "OrderableDBInstanceOptions[].EngineVersion" \
+  --output table
+
+```
+
+Verify
+```sh
+aws ssm start-session --target i-0374a5ca3623128d3
+
+sudo yum install -y nc
+sudo yum install -y postgresql15
+
+ping -c 1 watchlist-api-dev-rds-pg.cge8llp7glxc.us-east-1.rds.amazonaws.com
+
+nslookup watchlist-api-dev-rds-pg.cge8llp7glxc.us-east-1.rds.amazonaws.com
+
+nc -zv watchlist-api-dev-rds-pg.cge8llp7glxc.us-east-1.rds.amazonaws.com 5432
+
+psql \
+  -h watchlist-api-dev-rds-pg.cge8llp7glxc.us-east-1.rds.amazonaws.com \
+  -U watchlistadmin \
+  -d watchlistdb \
+  -p 5432
+
+
+```
+
+```psql
+SELECT version();
+
+SELECT current_database(), current_user;
+
+SELECT now();
+
+# write test ----------------------------
+CREATE TABLE healthcheck (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+INSERT INTO healthcheck DEFAULT VALUES;
+
+SELECT * FROM healthcheck;
+
+```

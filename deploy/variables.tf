@@ -39,3 +39,22 @@ variable "private_subnet_cidrs" {
 variable "my_public_ip" {
   type = string
 }
+
+# RDS variables ======================= #
+variable "rds_db_name" {
+  type = string
+  # default = "mydatabase"
+}
+
+variable "rds_username" {
+  type = string
+  # default = "dbadmin"
+}
+
+variable "rds_password" {
+  type      = string
+  sensitive = true
+  # default = "ChangeMe123!"
+}
+
+# application variables ======================= #
