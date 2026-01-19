@@ -161,3 +161,18 @@ INSERT INTO healthcheck DEFAULT VALUES;
 SELECT * FROM healthcheck;
 
 ```
+
+## ECS
+
+We shall use a known public container image (like `nginx`, `amazonlinux`, or `busybox`) as a smoke test to validate **IAM roles**, **networking**, **logs**, and **Fargate wiring** before we build our own image.
+
+
+## ECR
+
+```sh
+
+aws ecr get-login-password \
+  | docker login --username AWS --password-stdin $AWS_ACC_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+```
+

@@ -7,6 +7,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+# ec2 ===============
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -14,5 +15,20 @@ data "aws_ami" "amazon_linux" {
   filter {
     name   = "name"
     values = ["al2023-ami-*-x86_64"]
+  }
+}
+
+## ecs ===============
+
+data "aws_iam_policy_document" "ecs_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
   }
 }
