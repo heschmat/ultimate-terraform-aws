@@ -90,13 +90,24 @@ resource "aws_ecs_service" "app" {
   desired_count   = 1
   launch_type     = "FARGATE"
   network_configuration {
-    subnets          = aws_subnet.public_subnets[*].id
-    security_groups  = [aws_security_group.ecs_service.id]
-    assign_public_ip = true
+    # subnets          = aws_subnet.public_subnets[*].id
+    # assign_public_ip = true
+
+    security_groups = [aws_security_group.ecs_service.id]
+
+    subnets          = aws_subnet.private_subnets[*].id
+    assign_public_ip = false
+
   }
 
   # Enable ECS Exec
   enable_execute_command = true
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.ecs_tg.arn
+    container_name   = "nginx"
+    container_port   = 80
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.ecs_exec_attach_managed,
@@ -113,7 +124,8 @@ resource "aws_security_group" "ecs_service" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    # cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [aws_security_group.alb.id]
   }
   egress {
     from_port   = 0
@@ -122,20 +134,3 @@ resource "aws_security_group" "ecs_service" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
-# Output the ECS Cluster Name
-output "ecs_cluster_name" {
-  value = aws_ecs_cluster.main.name
-}
-
-# Output the ECS Service Name
-output "ecs_service_name" {
-  value = aws_ecs_service.app.name
-}
-
-# Output the ECS Task Definition ARN
-output "ecs_task_definition_arn" {
-  value = aws_ecs_task_definition.app.arn
-}
-
-
