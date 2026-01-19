@@ -167,6 +167,48 @@ SELECT * FROM healthcheck;
 We shall use a known public container image (like `nginx`, `amazonlinux`, or `busybox`) as a smoke test to validate **IAM roles**, **networking**, **logs**, and **Fargate wiring** before we build our own image.
 
 
+## CloudFront
+
+```sh
+# Upload a test file to S3:
+curl -L -o inception.jpg "https://i.ebayimg.com/images/g/LlUAAOSwm8VUwoRL/s-l1200.jpg"
+aws s3 cp inception.jpg  s3://watchlist-api-django-api-static-files/media/inception.jpg
+
+# Test CloudFront access (should WORK)
+
+curl -I https://d37625ibuebuo6.cloudfront.net/media/inception.jpg
+## HTTP/2 200
+## in browser the above link should load the image.
+# Refresh once or twice and you should see: `X-Cache: Hit from cloudfront`
+
+curl -I https://watchlist-api-django-api-static-files.s3.us-east-1.amazonaws.com/media/inception.jpg
+## HTTP/1.1 403 Forbidden
+```
+
+cache:
+```sh
+echo "version 1" > test-static.txt
+aws s3 cp test-static.txt s3://watchlist-api-django-api-static-files/static/test-static.txts
+
+curl -i https://d37625ibuebuo6.cloudfront.net/static/test-static.txt
+
+
+echo "version 2" > test-static.txt
+aws s3 cp test-static.txt s3://watchlist-api-django-api-static-file/static/test-static.txts
+
+curl -i https://d37625ibuebuo6.cloudfront.net/static/test-static.txt
+
+# force refresh:
+CF_DIST_ID=E35ALOIVOSSLCE
+aws cloudfront create-invalidation \
+  --distribution-id $CF_DIST_ID \
+  --paths "/static/*"
+
+
+curl -i https://d37625ibuebuo6.cloudfront.net/static/test-static.txt
+
+```
+
 ## ECR
 
 ```sh

@@ -48,4 +48,16 @@ output "ecs_task_definition_arn" {
   value = aws_ecs_task_definition.app.arn
 }
 
-# rds outputs ----------------------
+# s3 bucket output ----------------------
+output "s3_bucket_name" {
+  value = aws_s3_bucket.static.bucket
+}
+
+# cloudfront output ----------------------
+output "cloudfront_domain_name" {
+  value = aws_cloudfront_distribution.static.domain_name
+}
+
+output "cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.static.id
+}
