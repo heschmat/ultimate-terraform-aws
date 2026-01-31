@@ -138,31 +138,7 @@ resource "aws_instance" "private_test" {
     aws_security_group.private_test.id
   ]
 
-  user_data = <<-EOF
-    #!/bin/bash
-    set -eux
-
-    # Update system
-    yum update -y
-
-    # Enable extras / repos if needed
-    amazon-linux-extras enable postgresql15 || true
-
-    # Install useful tools
-    yum install -y \
-      curl \
-      wget \
-      bind-utils \
-      nc \
-      telnet \
-      traceroute \
-      jq \
-      postgresql15 \
-      tcpdump
-
-    # Optional: log completion
-    echo "Bootstrap completed at $(date)" > /var/log/bootstrap.log
-  EOF
+  user_data = file("${path.module}/user_data.sh")
 
   tags = {
     Name = "${local.prefix}-private-test"

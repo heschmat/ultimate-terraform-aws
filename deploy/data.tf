@@ -8,14 +8,19 @@ data "aws_availability_zones" "available" {
 }
 
 # ec2 ===============
+# The Amazon Linux 2023 minimal AMI does NOT include the SSM agent.
+
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    # values = ["al2023-ami-*-x86_64"]
+    # Full AL2023 AMIs do not contain -minimal- in this position:
+    values = ["al2023-ami-2023.*-x86_64"]
   }
+
 }
 
 ## ecs ===============
