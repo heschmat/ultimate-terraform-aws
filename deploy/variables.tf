@@ -41,20 +41,26 @@ variable "my_public_ip" {
 }
 
 # RDS variables ======================= #
-variable "rds_db_name" {
-  type = string
-  # default = "mydatabase"
+variable "db" {
+  description = "Database configuration"
+  type = object({
+    db_name     = string
+    username = string
+  })
+
 }
 
-variable "rds_username" {
-  type = string
-  # default = "dbadmin"
-}
-
-variable "rds_password" {
+variable "db_password" {
   type      = string
   sensitive = true
-  # default = "ChangeMe123!"
 }
 
 # application variables ======================= #
+variable "app_image" {
+  description = "image ecr uri"
+  default = "451579121839.dkr.ecr.us-east-1.amazonaws.com/watchlist/api:v2"
+}
+
+variable "django_secret_key" {
+  sensitive = true
+}

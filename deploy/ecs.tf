@@ -21,6 +21,13 @@ resource "aws_iam_role_policy_attachment" "ecs_task_attach_s3_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 }
 
+# An error occurred (TargetNotConnectedException) when calling the ExecuteCommand operation:
+resource "aws_iam_role_policy_attachment" "ecs_task_ssm" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${local.prefix}-ecs-cluster"
@@ -58,17 +65,46 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = jsonencode([
     {
-      name      = "nginx"
-      image     = "nginx:alpine"
+      # name      = "nginx"
+      # image     = "nginx:alpine"
+      # essential = true
+
+      # portMappings = [
+      #   {
+      #     containerPort = 80
+      #     hostPort      = 80
+      #     protocol      = "tcp"
+      #   }
+      # ]
+
+      name      = "api"
+      image     = var.app_image
       essential = true
 
       portMappings = [
         {
-          containerPort = 80
-          hostPort      = 80
+          containerPort = 8000
+          hostPort      = 8000
           protocol      = "tcp"
         }
       ]
+
+      environment = [
+        { name = "DJANGO_ALLOW_ASGI_HOST", value = "true" },
+        { name = "DEBUG", value = "0" },
+        { name = "DJANGO_SECRET_KEY", value = var.django_secret_key },
+        # Database settings
+        { name = "DB_NAME", value = var.db.db_name },
+        { name = "DB_USER", value = var.db.username },
+        { name = "DB_PASS", value = var.db_password },
+        { name = "DB_HOST", value = aws_db_instance.rds_postgres.address },
+        { name = "DB_PORT", value = tostring(aws_db_instance.rds_postgres.port) },
+        # S3 settings
+        { name = "AWS_STORAGE_BUCKET_NAME", value = aws_s3_bucket.static.bucket },
+        { name = "AWS_S3_REGION_NAME", value = var.aws_region },
+        { name = "CLOUDFRONT_DOMAIN", value = aws_cloudfront_distribution.static.domain_name },
+      ]
+
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -105,8 +141,10 @@ resource "aws_ecs_service" "app" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.ecs_tg.arn
-    container_name   = "nginx"
-    container_port   = 80
+    # container_name   = "nginx"
+    # container_port   = 80
+    container_name = "api"
+    container_port = 8000
   }
 
   depends_on = [
@@ -121,8 +159,8 @@ resource "aws_security_group" "ecs_service" {
   vpc_id      = aws_vpc.main.id
   ingress {
     description = "HTTP from anywhere"
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8000
+    to_port     = 8000
     protocol    = "tcp"
     # cidr_blocks = ["0.0.0.0/0"]
     security_groups = [aws_security_group.alb.id]

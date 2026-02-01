@@ -31,15 +31,20 @@ resource "aws_lb" "ecs" {
 
 resource "aws_lb_target_group" "ecs_tg" {
   name     = "${local.prefix}-ecs-tg"
-  port     = 80
+  port     = 8000
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
   # Target type for ALB: ip for Fargate (default is instance)
   target_type = "ip"
 
+  # lifecycle {
+  #   create_before_destroy = true
+  # }
+
   health_check {
-    path                = "/"
+    # path                = "/"
+    path = "/healthz"
     protocol            = "HTTP"
     matcher             = "200-399"
     interval            = 30
