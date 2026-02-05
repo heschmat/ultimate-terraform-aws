@@ -31,7 +31,7 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-# create the RDS Postgres instance
+# create the RDS Postgres instance (takes ~ 8min)
 resource "aws_db_instance" "rds_postgres" {
   identifier                 = "${local.prefix}-rds-pg"
   allocated_storage          = 20

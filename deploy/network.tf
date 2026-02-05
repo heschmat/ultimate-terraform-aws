@@ -1,13 +1,15 @@
 # create aws vpc
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+
+  enable_dns_support   = true   # = DNS resolution: Enabled
+  enable_dns_hostnames = true   # = DNS hostnames: Enabled
 
   tags = {
     Name = "${local.prefix}-vpc"
   }
 }
+
 
 # igw for public subnets
 resource "aws_internet_gateway" "igw" {

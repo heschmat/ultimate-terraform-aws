@@ -21,7 +21,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_attach_s3_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 }
 
-# An error occurred (TargetNotConnectedException) when calling the ExecuteCommand operation:
+# An error occurred (TargetNotConnectedException)
+# when calling the ExecuteCommand operation: The execute command failed due to an internal error.
 resource "aws_iam_role_policy_attachment" "ecs_task_ssm" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

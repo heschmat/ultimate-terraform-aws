@@ -28,6 +28,7 @@
 #   public_key = file("${path.module}/watchlist-api-dev.pub")
 # }
 # # ssh-keygen -t ed25519 -f watchlist-api-dev -C terraform
+# # ssh -i watchlist-api-dev ec2-user@<ec2-public-ip>
 
 
 # resource "aws_instance" "public_test" {
@@ -47,10 +48,13 @@
 
 # # ssh ec2-user@$(terraform output -raw public_test_ip)
 # # ssh -i ./deploy/watchlist-api-dev ec2-user@100.53.20.215
-# output "public_test_ip" {
+# output "public_instance_ip" {
 #   value = aws_instance.public_test.public_ip
 # }
 
+# =========================================================== #
+#
+# =========================================================== #
 
 # # test for private subnet access (should not be accessible from the internet) ----- #
 
