@@ -28,3 +28,17 @@ data "aws_ami" "amazon_linux_2023" {
     values = ["hvm"]
   }
 }
+
+# For ECS, we need to create an IAM role that the ECS tasks can assume to allow them to execute commands.
+data "aws_iam_policy_document" "ecs_role_assume_role_policy" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}

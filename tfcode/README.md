@@ -70,3 +70,47 @@ select now();
 create table if not exists healthcheck_test(id int);
 \dt
 ```
+
+
+## ECS
+
+```sh
+CLUSTER_NAME="django-ecs-image-default-ecs-cluster"
+SERVICE_NAME="django-ecs-image-default-app-service"
+
+aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME
+aws ecs list-tasks --cluster $CLUSTER_NAME
+aws ecs list-tasks --cluster $CLUSTER_NAME
+{
+    "taskArns": [
+        "arn:aws:ecs:us-east-1:854912240456:task/django-ecs-image-default-ecs-cluster/df40cd613926413ba64d0f5930181a9b"
+    ]
+}
+TASK_ID=df40cd613926413ba64d0f5930181a9b
+aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks $TASK_ID
+
+
+
+NET_INT_ID=$(aws ecs describe-tasks \
+  --cluster $CLUSTER_NAME \
+  --tasks $TASK_ID \
+  --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+  --output text)
+echo $NET_INT_ID
+
+# get the task public IP
+PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+  --network-interface-ids $NET_INT_ID \
+  --query 'NetworkInterfaces[0].Association.PublicIp' \
+  --output text
+)
+echo $PUBLIC_IP
+
+# test
+curl -i $PUBLIC_IP
+
+curl http://$(aws ec2 describe-network-interfaces \
+  --network-interface-ids eni-04b954f79c71e3d99 \
+  --query 'NetworkInterfaces[0].Association.PublicIp' \
+  --output text)
+```
