@@ -43,6 +43,31 @@ resource "aws_iam_role_policy" "ec2_read_rds_secret" {
   })
 }
 
+resource "aws_iam_role_policy" "ec2_read_ecs" {
+  name = "${local.prefix}-ec2-read-ecs"
+  role = aws_iam_role.ec2_ssm_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:ListClusters",
+          "ecs:DescribeClusters",
+          "ecs:ListServices",
+          "ecs:DescribeServices",
+          "ecs:ListTasks",
+          "ecs:DescribeTasks",
+          "ecs:DescribeTaskDefinition",
+          "ec2:DescribeNetworkInterfaces"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2_ssm_profile" {
   name = "ec2-ssm-profile"
   role = aws_iam_role.ec2_ssm_role.name
@@ -100,6 +125,17 @@ resource "aws_vpc_security_group_egress_rule" "ec2_to_rds_postgres" {
   from_port                    = 5432
   to_port                      = 5432
   referenced_security_group_id = aws_security_group.rds_postgres.id
+}
+
+# ⚠️ otherwise: 
+# sh-5.2$ curl -i $PRIVATE_IP
+# curl: (28) Failed to connect to 10.0.102.29 port 80 after 131292 ms: Could not connect to server
+resource "aws_vpc_security_group_egress_rule" "ec2_to_ecs_http" {
+  security_group_id            = aws_security_group.ec2_ssm_sg.id
+  ip_protocol                  = "tcp"
+  from_port                    = var.container_port
+  to_port                      = var.container_port
+  referenced_security_group_id = aws_security_group.ecs_tasks.id
 }
 
 # EC2 instance to test SSM connectivity

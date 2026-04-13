@@ -32,7 +32,16 @@ aws ssm start-session --target i-07f23ea77fbe22ec4
 
 # inside the shell
 
+whoami
+# ssm-user
+
 aws sts get-caller-identity
+# {
+#     "UserId": "AROA4ODF5RNEOFSAHZIAT:i-08534255e68b3e0b9",
+#     "Account": "854912240456",
+#     "Arn": "arn:aws:sts::854912240456:assumed-role/ec2-ssm-role/i-08534255e68b3e0b9"
+# }
+
 
 # sudo dnf install -y jq nmap-ncat postgresql17
 
@@ -81,11 +90,12 @@ SERVICE_NAME="django-ecs-image-default-app-service"
 aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME
 aws ecs list-tasks --cluster $CLUSTER_NAME
 aws ecs list-tasks --cluster $CLUSTER_NAME
-{
-    "taskArns": [
-        "arn:aws:ecs:us-east-1:854912240456:task/django-ecs-image-default-ecs-cluster/df40cd613926413ba64d0f5930181a9b"
-    ]
-}
+# {
+#     "taskArns": [
+#         "arn:aws:ecs:us-east-1:854912240456:task/django-ecs-image-default-ecs-cluster/df40cd613926413ba64d0f5930181a9b"
+#     ]
+# }
+
 TASK_ID=df40cd613926413ba64d0f5930181a9b
 aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks $TASK_ID
 
@@ -113,4 +123,27 @@ curl http://$(aws ec2 describe-network-interfaces \
   --network-interface-ids eni-04b954f79c71e3d99 \
   --query 'NetworkInterfaces[0].Association.PublicIp' \
   --output text)
+
+# step 2 --- (private via ssm_box)
+PRIVATE_IP=$(aws ec2 describe-network-interfaces \
+  --network-interface-ids $NET_INT_ID \
+  --query 'NetworkInterfaces[0].PrivateIpAddress' \
+  --output text)
+
+echo $PRIVATE_IP
+```
+
+
+
+
+## MiSK
+
+```sh
+# count (list) vs. for_each (map)
+subnets = aws_subnet.private[*].id
+subnets = values(aws_subnet.private)[*].id
+subnets = [for s in aws_subnet.private : s.id]
+
+# aws_subnet.private["private_1"] ✅
+# aws_subnet.private[0] ❌
 ```

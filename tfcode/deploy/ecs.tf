@@ -75,11 +75,11 @@ resource "aws_security_group" "ecs_tasks" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ecs_http" {
-  security_group_id = aws_security_group.ecs_tasks.id
-  from_port         = var.container_port
-  to_port           = var.container_port
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
+  security_group_id            = aws_security_group.ecs_tasks.id
+  from_port                    = var.container_port
+  to_port                      = var.container_port
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.ec2_ssm_sg.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "ecs_all_out" {
@@ -136,9 +136,9 @@ resource "aws_ecs_service" "app" {
   enable_execute_command = true
 
   network_configuration {
-    subnets          = aws_subnet.public[*].id
+    subnets = [for s in aws_subnet.private : s.id]
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true
+    assign_public_ip = false
   }
 
   tags = {
