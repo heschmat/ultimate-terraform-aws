@@ -21,3 +21,8 @@ output "postgres_port" {
 output "postgres_secret_arn" {
   value = local.postgres_instance.master_user_secret[0].secret_arn
 }
+
+# alb outputs -----
+output "alb_dns_name" {
+  value = aws_lb.ecs.dns_name
+}

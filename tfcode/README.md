@@ -131,10 +131,44 @@ PRIVATE_IP=$(aws ec2 describe-network-interfaces \
   --output text)
 
 echo $PRIVATE_IP
+
+curl -i http://$PRIVATE_IP
+# HTTP/1.1 200 OK
+# Server: nginx/1.29.8
+# Date: Mon, 13 Apr 2026 23:20:50 GMT
+# ...
 ```
 
+### ECS V3 (alb)
+The only future changes will be:
+- create ALB in public subnets
+- create ALB SG allowing 80 from internet
+- ECS SG ingress changes source from EC2 SG → ALB SG
+- ECS service gets `load_balancer` block
+- keep ECS tasks in private subnets
+- keep `assign_public_ip = false`
 
+We now have the standard pattern:
+- ALB in public subnets
+- ECS tasks in private subnets
+- no public IP on tasks
+- internet traffic hits the ALB
+- ALB forwards to the target group
+- target group routes to ECS task private IPs
+- ECS SG only allows traffic from the ALB SG
 
+The flow is:
+| Laptop → ALB DNS name → ALB listener :80 → target group → ECS task private IP :80 → nginx
+
+```sh
+ALB_DNS_NAME=django-ecs-image-default-alb-198176139.us-east-1.elb.amazonaws.com
+
+curl -i $ALB_DNS_NAME
+HTTP/1.1 200 OK
+Date: Mon, 13 Apr 2026 23:26:07 GMT
+```
+
+In the final setup, the ECS Fargate tasks run in private subnets without public IP addresses, so they are not directly reachable from the internet. A public Application Load Balancer is placed in the public subnets and receives HTTP traffic from the internet. The ALB forwards requests to a target group of type `ip`, which routes traffic directly to the private ENIs of the ECS tasks. The ECS task security group only allows inbound traffic from the ALB security group, which keeps the application tier private while still making the service publicly accessible through the load balancer.
 
 ## MiSK
 

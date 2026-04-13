@@ -74,7 +74,15 @@ resource "aws_security_group" "ecs_tasks" {
   }
 }
 
-resource "aws_vpc_security_group_ingress_rule" "ecs_http" {
+resource "aws_vpc_security_group_ingress_rule" "ecs_http_from_alb" {
+  security_group_id            = aws_security_group.ecs_tasks.id
+  from_port                    = var.container_port
+  to_port                      = var.container_port
+  ip_protocol                  = "tcp"
+  referenced_security_group_id = aws_security_group.alb.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ecs_http_from_ec2" {
   security_group_id            = aws_security_group.ecs_tasks.id
   from_port                    = var.container_port
   to_port                      = var.container_port
@@ -136,9 +144,15 @@ resource "aws_ecs_service" "app" {
   enable_execute_command = true
 
   network_configuration {
-    subnets = [for s in aws_subnet.private : s.id]
+    subnets          = [for s in aws_subnet.private : s.id]
     security_groups  = [aws_security_group.ecs_tasks.id]
     assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.ecs.arn
+    container_name   = var.container_name
+    container_port   = var.container_port
   }
 
   tags = {
