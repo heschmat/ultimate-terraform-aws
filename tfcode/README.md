@@ -188,7 +188,9 @@ docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION
 aws ecr create-repository --repository-name $APP_NAME --region $AWS_REGION
 
 docker build -t $APP_NAME .
-docker tag $APP_NAME:latest
+docker tag $APP_NAME:latest $IMAGE_URI
+
+docker push $IMAGE_URI
 
 ```
 

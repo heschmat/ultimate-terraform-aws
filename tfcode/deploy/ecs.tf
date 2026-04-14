@@ -66,6 +66,33 @@ resource "aws_iam_role_policy" "ecs_task_exec_command" {
   })
 }
 
+resource "aws_iam_role_policy" "ecs_task_s3_access" {
+  name = "${local.prefix}-ecs-task-s3-access"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = "arn:aws:s3:::${var.s3_bucket_name}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "arn:aws:s3:::${var.s3_bucket_name}/${var.s3_prefix}/*"
+      }
+    ]
+  })
+}
+
 # ECS cluster -----
 resource "aws_ecs_cluster" "main" {
   name = "${local.prefix}-ecs-cluster"
@@ -153,6 +180,18 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "DB_NAME"
           value = "app"
+        },
+        {
+          name  = "S3_BUCKET"
+          value = var.s3_bucket_name
+        },
+        {
+          name  = "AWS_REGION"
+          value = data.aws_region.current.id
+        },
+        {
+          name  = "S3_PREFIX"
+          value = var.s3_prefix
         }
       ]
 

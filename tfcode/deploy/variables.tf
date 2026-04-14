@@ -91,3 +91,18 @@ variable "desired_count" {
   type    = number
   default = 1
 }
+
+# S3 -----
+variable "s3_bucket_name" {
+  type    = string
+  default = "fastapi-eks-demo-ijk"
+}
+
+# variable "s3_bucket_arn" {
+#   type    = string
+#   default = "arn:aws:s3:::fastapi-eks-demo-ijk"
+# }
+
+variable "s3_prefix" {
+  default = "uploads"
+}
