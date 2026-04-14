@@ -63,17 +63,18 @@ variable "app_name" {
 
 variable "container_image" {
   type    = string
-  default = "nginx:latest"
+  default = "854912240456.dkr.ecr.us-east-1.amazonaws.com/fastapi-ecs-demo:latest"
+
 }
 
 variable "container_name" {
   type    = string
-  default = "app"
+  default = "fastapi-ecs-demo"
 }
 
 variable "container_port" {
   type    = number
-  default = 80
+  default = 8000
 }
 
 variable "task_cpu" {

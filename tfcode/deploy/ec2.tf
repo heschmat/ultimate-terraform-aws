@@ -148,13 +148,15 @@ resource "aws_instance" "ssm_box" {
 
   user_data_replace_on_change = true
 
-  user_data = <<-EOF
-    #!/bin/bash
-    set -euxo pipefail
+  # user_data = <<-EOF
+  #   #!/bin/bash
+  #   set -euxo pipefail
 
-    dnf update -y
-    dnf install -y jq nmap-ncat postgresql17
-  EOF
+  #   dnf update -y
+  #   dnf install -y jq nmap-ncat postgresql17
+  # EOF
+
+  user_data = file("${path.module}/user_data.sh")
 
   tags = {
     Name = "${local.prefix}-ssm-box"

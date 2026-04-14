@@ -11,6 +11,27 @@ resource "aws_iam_role_policy_attachment" "ecs_exec_role_ssm_core" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "ecs_exec_role_read_rds_secret" {
+  name = "${local.prefix}-ecs-exec-role-read-rds-secret"
+  role = aws_iam_role.ecs_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+
+        Resource = local.postgres_instance.master_user_secret[0].secret_arn
+      }
+    ]
+  })
+}
+
+
 # task role -----
 resource "aws_iam_role" "ecs_task_role" {
   name               = "ecs-task-role"
@@ -117,6 +138,32 @@ resource "aws_ecs_task_definition" "app" {
           containerPort = var.container_port
           hostPort      = var.container_port
           protocol      = "tcp"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "DB_HOST"
+          value = local.postgres_instance.address
+        },
+        {
+          name  = "DB_PORT"
+          value = tostring(local.postgres_instance.port)
+        },
+        {
+          name  = "DB_NAME"
+          value = "app"
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "DB_USER"
+          valueFrom = "${local.postgres_instance.master_user_secret[0].secret_arn}:username::"
+        },
+        {
+          name      = "DB_PASSWORD"
+          valueFrom = "${local.postgres_instance.master_user_secret[0].secret_arn}:password::"
         }
       ]
 

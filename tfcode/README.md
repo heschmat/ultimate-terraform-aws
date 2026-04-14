@@ -170,6 +170,89 @@ Date: Mon, 13 Apr 2026 23:26:07 GMT
 
 In the final setup, the ECS Fargate tasks run in private subnets without public IP addresses, so they are not directly reachable from the internet. A public Application Load Balancer is placed in the public subnets and receives HTTP traffic from the internet. The ALB forwards requests to a target group of type `ip`, which routes traffic directly to the private ENIs of the ECS tasks. The ECS task security group only allows inbound traffic from the ALB security group, which keeps the application tier private while still making the service publicly accessible through the load balancer.
 
+
+## FastAPI demo
+
+```sh
+# login
+AWS_REGION=us-east-1
+AWS_ACCOUNT_ID=854912240456
+APP_NAME=fastapi-ecs-demo
+IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME:latest
+
+aws ecr get-login-password --region $AWS_REGION | \
+docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+
+# create ECR repo
+aws ecr create-repository --repository-name $APP_NAME --region $AWS_REGION
+
+docker build -t $APP_NAME .
+docker tag $APP_NAME:latest
+
+```
+
+Use `execution role` when **ECS/Fargate** itself needs permission before or while starting the container.
+Use `task role` when your **application code** inside the container needs to call AWS APIs at runtime.
+
+The ECS execution role is used by the ECS/Fargate platform for startup-time operations such as pulling container images, sending logs, and resolving secrets defined in the task definition. The ECS task role is assumed by the application running inside the container and is only needed when the application itself calls AWS APIs.
+
+## DDX
+
+### 503 Service Temporarily Unavailable
+wait couple of minutes for the ALB to get ready ;)
+
+
+### TargetNotConnected (SSM)
+
+```sh
+
+aws ssm start-session --target i-089db8bcb41dd6f62
+
+# aws: [ERROR]: An error occurred (TargetNotConnected) when calling the StartSession operation: i-089db8bcb41dd6f62 is not connected.
+
+```
+
+Check the actual Session Manager connection status:
+```sh
+aws ssm get-connection-status --target i-089db8bcb41dd6f62
+# {
+#     "Target": "i-089db8bcb41dd6f62",
+#     "Status": "notconnected"
+# }
+```
+
+Check whether the instance is visible to SSM
+```sh
+aws ssm describe-instance-information \
+  --filters "Key=InstanceIds,Values=i-0e11d42d5aab227b2"
+
+# {
+#     "InstanceInformationList": []
+# }
+```
+
+Check the EC2 instance status and profile
+```sh
+aws ec2 describe-instances \
+  --instance-ids i-0e11d42d5aab227b2 \
+  --query 'Reservations[0].Instances[0].[State.Name,IamInstanceProfile.Arn,SubnetId,PrivateIpAddress]' \
+  --output table
+
+```
+
+
+```sh
+terraform taint aws_instance.ssm_box
+terraform apply --auto-approve
+
+
+aws ec2 get-console-output --instance-id <new-id> --latest --output text
+aws ec2 get-console-output --instance-id i-01a2bbf37519b8b2a --latest --output text
+```
+
+root cause: The selected Amazon Linux 2023 AMI did not have SSM Agent installed. :|
+
 ## MiSK
 
 ```sh

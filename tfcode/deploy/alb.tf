@@ -30,7 +30,9 @@ resource "aws_lb" "ecs" {
 }
 
 resource "aws_lb_target_group" "ecs" {
-  name     = "${local.prefix}-tg"
+  # "name_prefix" cannot be longer than 6 characters
+  name_prefix = "tg-"
+  #   name     = "${local.prefix}-tg"
   port     = var.container_port
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
@@ -40,13 +42,19 @@ resource "aws_lb_target_group" "ecs" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    path                = "/healthz"
     protocol            = "HTTP"
     matcher             = "200-399"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
+  }
+
+  # lifecycle rule to avoid "Error: InvalidParameter: 1 validation error(s) found. - 
+  # cannot delete target group because it is currently in use by a listener"
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = {
